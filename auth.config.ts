@@ -8,6 +8,9 @@ import type { NextAuthConfig } from "next-auth";
  * server components).
  */
 export const authConfig = {
+  // Vercel sets VERCEL=1 and is auto-trusted; this covers self-hosted /
+  // local-production deployments behind a URL Auth.js doesn't already know.
+  trustHost: true,
   pages: {
     signIn: "/login",
   },

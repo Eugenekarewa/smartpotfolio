@@ -23,22 +23,19 @@ export function userScoped(schema: Schema) {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
   });
 
+  // Mongoose 9 dropped the next() callback from pre-hooks — throwing (or
+  // returning a rejected promise) is now how a hook aborts the operation.
   const pre = schema.pre.bind(schema) as (
     op: string,
-    fn: (
-      this: { getFilter: () => Record<string, unknown>; model: { modelName: string } },
-      next: (err?: Error) => void
-    ) => void
+    fn: (this: { getFilter: () => Record<string, unknown>; model: { modelName: string } }) => void
   ) => void;
 
   for (const op of SCOPED_QUERY_OPS) {
-    pre(op, function (next) {
+    pre(op, function () {
       const filter = this.getFilter();
       if (!filter || typeof filter.userId === "undefined") {
-        next(new Error(`Unscoped query blocked on ${this.model.modelName}.${op}: every query must filter by userId.`));
-        return;
+        throw new Error(`Unscoped query blocked on ${this.model.modelName}.${op}: every query must filter by userId.`);
       }
-      next();
     });
   }
 }
